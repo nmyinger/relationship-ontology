@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deal-flow-engine"
+version = "0.1.0"
+description = "Private deal flow intelligence engine"
+requires-python = ">=3.11"
+
+# Runtime dependencies — only what Slice 1 needs today.
+# Each later slice will add to this list with its own justification.
+dependencies = [
+    # psycopg2-binary: Postgres driver for direct SQL execution (no ORM).
+    # Binary distribution avoids requiring libpq-dev at install time.
+    "psycopg2-binary>=2.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    # pytest: test runner; required by `make test`.
+    "pytest>=8.0",
+
+    # ruff: fast Python linter and formatter; replaces flake8 + isort + pyupgrade
+    # in a single zero-config binary. Chosen over flake8 for speed and unified config.
+    "ruff>=0.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = []

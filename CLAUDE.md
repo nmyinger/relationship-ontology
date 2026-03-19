@@ -4,6 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
+v1 is engine-only
+no standalone web app
+delivery is daily email + print-optimized PDF
+prefer simple deterministic code
+keep files small and modular
+every feature needs a test or a verification command
+no new dependency without justification
+no change without updating the relevant spec/doc
+
 **Personal Deal Flow Engine** — a private, single-player intelligence system for relationship-driven dealmaking in real estate private equity. It ingests relationship activity (email, calendar, deal data) and outputs daily ranked recommendations of who to contact, with reasons and draft messages. It is a decision engine, not a CRM.
 
 ## Current Status
