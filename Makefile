@@ -1,4 +1,4 @@
-.PHONY: install test lint run-daily migrate setup-db load-deals
+.PHONY: install test lint run-daily migrate setup-db load-deals sync-gmail sync-calendar
 
 VENV      := .venv
 PYTHON    := $(VENV)/bin/python
@@ -39,6 +39,14 @@ migrate:
 # Usage: make load-deals FILE=data/deals_template.csv
 load-deals:
 	$(PYTHON) -m src.ingestion.deal_loader $(FILE)
+
+# sync-gmail — fetch new Gmail messages into the email_raw staging table.
+sync-gmail:
+	$(PYTHON) -m src.ingestion.gmail_connector
+
+# sync-calendar — fetch new calendar events into the calendar_raw staging table.
+sync-calendar:
+	$(PYTHON) -m src.ingestion.calendar_connector
 
 # run-daily — placeholder for the daily pipeline entry point (implemented in Slice 11).
 run-daily:

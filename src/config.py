@@ -11,6 +11,12 @@ Rules:
 
 import os
 
+from dotenv import load_dotenv
+
+# Load .env file (if present) so callers don't need to export vars manually.
+# Existing env vars take precedence (override=False is the default).
+load_dotenv()
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -49,8 +55,7 @@ def load_config() -> dict:
       LLM_MODEL    — LLM model identifier (default: "gpt-4o")
 
     Later-slice keys (declared but not validated here):
-      GMAIL_CREDENTIALS_PATH          — validated by Slice 4 (Gmail ingestion)
-      GOOGLE_CALENDAR_CREDENTIALS_PATH — validated by Slice 5 (Calendar ingestion)
+      GOOGLE_CREDENTIALS_PATH         — validated by Slices 4/5 (Gmail + Calendar)
       LLM_API_KEY                     — validated by Slice 6 (extraction / LLM calls)
       LLM_API_BASE_URL                — validated by Slice 6
       EMAIL_FROM                      — validated by Slice 10 (email delivery)
@@ -72,10 +77,7 @@ def load_config() -> dict:
 
     # --- Later-slice keys: read if present, None if absent ---
     # These are deliberately not validated here; each slice validates what it needs.
-    config["GMAIL_CREDENTIALS_PATH"] = os.environ.get("GMAIL_CREDENTIALS_PATH")
-    config["GOOGLE_CALENDAR_CREDENTIALS_PATH"] = os.environ.get(
-        "GOOGLE_CALENDAR_CREDENTIALS_PATH"
-    )
+    config["GOOGLE_CREDENTIALS_PATH"] = os.environ.get("GOOGLE_CREDENTIALS_PATH")
     config["LLM_API_KEY"] = os.environ.get("LLM_API_KEY")
     config["LLM_API_BASE_URL"] = os.environ.get("LLM_API_BASE_URL")
     config["EMAIL_FROM"] = os.environ.get("EMAIL_FROM")

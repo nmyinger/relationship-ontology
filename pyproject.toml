@@ -14,6 +14,23 @@ dependencies = [
     # psycopg2-binary: Postgres driver for direct SQL execution (no ORM).
     # Binary distribution avoids requiring libpq-dev at install time.
     "psycopg2-binary>=2.9",
+
+    # google-api-python-client: Official Google API client. Required by Slice 4
+    # (Gmail ingestion) and Slice 5 (Calendar ingestion) for API discovery and calls.
+    "google-api-python-client>=2.100",
+
+    # google-auth: Core Google auth library. Used directly for Credentials and
+    # token refresh in gmail_connector.py. Transitive dep of google-auth-oauthlib
+    # but imported directly, so declared explicitly.
+    "google-auth>=2.0",
+
+    # google-auth-oauthlib: OAuth2 credential handling for Google APIs.
+    # Loads pre-existing token.json with refresh token for headless operation.
+    "google-auth-oauthlib>=1.2",
+
+    # python-dotenv: Loads .env files into os.environ so DATABASE_URL,
+    # GOOGLE_CREDENTIALS_PATH, etc. don't need to be exported manually.
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]

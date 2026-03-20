@@ -15,8 +15,10 @@ build/
 # OAuth credentials — never commit
 credentials/*.json
 
-# Generated PDF output
+# Generated
 output/
+data/
+db/
 
 # Editor and OS noise
 .DS_Store
@@ -24,6 +26,8 @@ output/
 *.swo
 .idea/
 .vscode/
+.pytest_cache/
+.ruff_cache/
 
 # Claude logs
 .claude/

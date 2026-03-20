@@ -104,8 +104,7 @@ def test_later_slice_keys_are_none_when_absent(monkeypatch):
     """Keys needed by later slices must be None (not raise) when absent."""
     monkeypatch.setenv("DATABASE_URL", "postgresql://x:y@localhost/db")
     for key in [
-        "GMAIL_CREDENTIALS_PATH",
-        "GOOGLE_CALENDAR_CREDENTIALS_PATH",
+        "GOOGLE_CREDENTIALS_PATH",
         "LLM_API_KEY",
         "LLM_API_BASE_URL",
         "EMAIL_FROM",
@@ -118,8 +117,7 @@ def test_later_slice_keys_are_none_when_absent(monkeypatch):
 
     config = load_config()
 
-    assert config["GMAIL_CREDENTIALS_PATH"] is None
-    assert config["GOOGLE_CALENDAR_CREDENTIALS_PATH"] is None
+    assert config["GOOGLE_CREDENTIALS_PATH"] is None
     assert config["LLM_API_KEY"] is None
     assert config["LLM_API_BASE_URL"] is None
     assert config["EMAIL_FROM"] is None

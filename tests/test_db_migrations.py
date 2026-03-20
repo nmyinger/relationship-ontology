@@ -31,6 +31,9 @@ _EXPECTED_MIGRATIONS = [
     "005_create_recommendations.sql",
     "006_create_schema_versions.sql",
     "007_add_deals_name_unique.sql",
+    "008_create_email_raw.sql",
+    "009_create_ingestion_watermarks.sql",
+    "010_create_calendar_raw.sql",
 ]
 
 _CORE_TABLES = {
@@ -144,7 +147,7 @@ def test_schema_versions_table_is_created(migrated_conn):
 
 
 def test_all_six_migrations_applied(migrated_conn):
-    """Exactly 6 rows in schema_versions with the expected filenames."""
+    """All expected rows in schema_versions with the expected filenames."""
     with migrated_conn.cursor() as cur:
         cur.execute("SELECT migration_name FROM schema_versions ORDER BY migration_name")
         applied = [row[0] for row in cur.fetchall()]
@@ -258,7 +261,7 @@ def test_runner_is_idempotent():
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM schema_versions")
             count = cur.fetchone()[0]
-        assert count == 7
+        assert count == 10
     finally:
         _drop_schema(db_url, conn, schema_name)
 
@@ -306,7 +309,7 @@ def test_runner_skips_already_applied():
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM schema_versions")
             total = cur.fetchone()[0]
-        assert total == 7
+        assert total == 10
     finally:
         _drop_schema(db_url, conn, schema_name)
 
