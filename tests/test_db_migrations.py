@@ -41,6 +41,10 @@ _EXPECTED_MIGRATIONS = [
     "015_add_email_raw_skip_reason.sql",
     "016_add_persons_is_internal.sql",
     "017_create_contact_scores.sql",
+    "018_add_deal_lifecycle.sql",
+    "019_create_person_interactions.sql",
+    "020_create_interaction_companies.sql",
+    "021_create_interaction_deals.sql",
 ]
 
 _CORE_TABLES = {
@@ -218,6 +222,9 @@ def test_deals_columns(migrated_conn):
         "strategy_tags",
         "status",
         "owner_user_id",
+        "created_at",
+        "updated_at",
+        "closed_at",
     }
     actual = _columns_for(migrated_conn, "deals", schema)
     assert actual == expected, f"Column mismatch: got {actual}"
@@ -269,7 +276,7 @@ def test_runner_is_idempotent():
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM schema_versions")
             count = cur.fetchone()[0]
-        assert count == 17
+        assert count == 21
     finally:
         _drop_schema(db_url, conn, schema_name)
 
@@ -317,7 +324,7 @@ def test_runner_skips_already_applied():
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM schema_versions")
             total = cur.fetchone()[0]
-        assert total == 17
+        assert total == 21
     finally:
         _drop_schema(db_url, conn, schema_name)
 

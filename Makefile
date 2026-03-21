@@ -1,4 +1,4 @@
-.PHONY: install test lint run-daily migrate setup-db load-deals sync-gmail sync-calendar extract score recommend render-pdf
+.PHONY: install test lint run-daily migrate setup-db load-deals sync-gmail sync-calendar extract discover-deals link link-full score recommend render-pdf
 
 VENV      := .venv
 PYTHON    := $(VENV)/bin/python
@@ -51,6 +51,18 @@ sync-calendar:
 # extract — run the entity extraction pipeline over unprocessed email and calendar rows.
 extract:
 	$(PYTHON) -m src.extraction.extractor
+
+# discover-deals — auto-discover deals from extracted deal_mention signals via LLM.
+discover-deals:
+	$(PYTHON) -m src.extraction.deal_discoverer
+
+# link — resolve extracted entities into canonical graph edges (incremental).
+link:
+	$(PYTHON) -m src.linking.linker
+
+# link-full — re-link all interactions (safe for backfill after deal CSV reload).
+link-full:
+	$(PYTHON) -m src.linking.linker full
 
 # score — compute priority scores for all contacts.
 score:

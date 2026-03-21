@@ -40,7 +40,16 @@ ON CONFLICT (name) DO UPDATE SET
     stage          = EXCLUDED.stage,
     strategy_tags  = EXCLUDED.strategy_tags,
     status         = EXCLUDED.status,
-    owner_user_id  = EXCLUDED.owner_user_id
+    owner_user_id  = EXCLUDED.owner_user_id,
+    updated_at     = now(),
+    closed_at      = CASE
+        WHEN EXCLUDED.status IN ('closed', 'dead', 'on_hold')
+             AND deals.status = 'active'
+        THEN now()
+        WHEN EXCLUDED.status = 'active'
+        THEN NULL
+        ELSE deals.closed_at
+    END
 """
 
 
