@@ -281,6 +281,42 @@ def test_watermark_does_not_advance_on_api_error(db):
     assert get_watermark("calendar", conn) is None
 
 
+def test_cancelled_event_is_skipped(db):
+    """Events with status='cancelled' are excluded before any other filtering."""
+    scoped_url, conn = db
+
+    event = _make_calendar_event(
+        event_id="cancelled1",
+        attendees=[{"email": _USER}, {"email": _EXTERNAL}],
+    )
+    event["status"] = "cancelled"
+    service = _build_mock_service([event])
+
+    count = sync_calendar(
+        database_url=scoped_url, service=service, user_email=_USER
+    )
+    assert count == 0
+    assert _calendar_raw_count(conn) == 0
+
+
+def test_confirmed_event_passes(db):
+    """Events with status='confirmed' are processed normally."""
+    scoped_url, conn = db
+
+    event = _make_calendar_event(
+        event_id="confirmed1",
+        attendees=[{"email": _USER}, {"email": _EXTERNAL}],
+    )
+    event["status"] = "confirmed"
+    service = _build_mock_service([event])
+
+    count = sync_calendar(
+        database_url=scoped_url, service=service, user_email=_USER
+    )
+    assert count == 1
+    assert _calendar_raw_count(conn) == 1
+
+
 def test_all_day_event_uses_date_not_datetime(db):
     """All-day events are normalised to midnight UTC, not skipped."""
     scoped_url, conn = db

@@ -23,12 +23,26 @@ from src.ingestion.watermark import get_watermark, set_watermark
 # instead of fetching the entire mailbox.
 _DEFAULT_LOOKBACK_DAYS = 90
 
+# Gmail category tabs to exclude server-side (zero extra API calls).
+_CATEGORY_EXCLUSIONS = "-category:promotions -category:updates -category:forums -category:social"
+
+# Labels that indicate non-personal mail — skip before downloading full body.
+_SKIP_LABELS = frozenset({
+    "TRASH", "SPAM", "DRAFT",
+    "CATEGORY_PROMOTIONS", "CATEGORY_UPDATES", "CATEGORY_FORUMS", "CATEGORY_SOCIAL",
+})
+
+# Messages larger than this are likely attachments/newsletters — skip.
+_MAX_SIZE_BYTES = 250_000
+
 _INSERT_SQL = """
 INSERT INTO email_raw
-    (external_id, timestamp, direction, sender, recipients, subject, body_text, raw_payload)
+    (external_id, timestamp, direction, sender, recipients, subject, body_text,
+     raw_payload, thread_id, label_ids)
 VALUES
     (%(external_id)s, %(timestamp)s, %(direction)s, %(sender)s,
-     %(recipients)s, %(subject)s, %(body_text)s, %(raw_payload)s)
+     %(recipients)s, %(subject)s, %(body_text)s, %(raw_payload)s,
+     %(thread_id)s, %(label_ids)s)
 ON CONFLICT (external_id) DO NOTHING
 """
 
@@ -50,6 +64,27 @@ def _fetch_message_ids(service, user_id: str, query: str | None) -> list[str]:
             ids.append(msg["id"])
         request = service.users().messages().list_next(request, response)
     return ids
+
+
+def _fetch_metadata(service, user_id: str, msg_id: str) -> dict:
+    """Fetch only message metadata (labels, size) — cheaper than format=full."""
+    return service.users().messages().get(
+        userId=user_id, id=msg_id, format="metadata"
+    ).execute()
+
+
+def _should_skip_by_metadata(meta: dict) -> str | None:
+    """Return a skip reason if the message should be skipped, else None."""
+    labels = set(meta.get("labelIds", []))
+    overlap = labels & _SKIP_LABELS
+    if overlap:
+        return f"label:{sorted(overlap)[0]}"
+
+    size = meta.get("sizeEstimate", 0)
+    if size > _MAX_SIZE_BYTES:
+        return f"oversized:{size}"
+
+    return None
 
 
 def _fetch_full_message(service, user_id: str, msg_id: str) -> dict:
@@ -150,6 +185,8 @@ def _normalise(message: dict, user_email: str | None) -> dict:
         "subject": _get_header(headers, "Subject"),
         "body_text": _extract_plain_text(message.get("payload", {})),
         "raw_payload": json.dumps(message),
+        "thread_id": message.get("threadId"),
+        "label_ids": message.get("labelIds"),
     }
 
 
@@ -209,7 +246,7 @@ def sync_gmail(
             after_date = watermark
         else:
             after_date = datetime.now(tz=timezone.utc) - timedelta(days=_DEFAULT_LOOKBACK_DAYS)
-        query = f"after:{after_date.strftime('%Y/%m/%d')}"
+        query = f"after:{after_date.strftime('%Y/%m/%d')} {_CATEGORY_EXCLUSIONS}"
 
         # Fetch message IDs.
         msg_ids = _fetch_message_ids(service, "me", query)
@@ -218,12 +255,21 @@ def sync_gmail(
 
         print(f"Fetching {len(msg_ids)} message(s)...")
 
-        # Fetch full messages and normalise.
+        # Fetch full messages and normalise (with metadata pre-screening).
         rows: list[dict] = []
+        skipped = 0
         latest_ts: datetime | None = None
         for i, msg_id in enumerate(msg_ids, 1):
             if i % 50 == 0:
                 print(f"  {i}/{len(msg_ids)}...")
+
+            # Two-pass: cheap metadata check first, full download only if needed.
+            meta = _fetch_metadata(service, "me", msg_id)
+            skip_reason = _should_skip_by_metadata(meta)
+            if skip_reason:
+                skipped += 1
+                continue
+
             full_msg = _fetch_full_message(service, "me", msg_id)
             normalised = _normalise(full_msg, user_email)
             rows.append(normalised)
@@ -231,6 +277,9 @@ def sync_gmail(
             msg_ts = normalised["timestamp"]
             if latest_ts is None or msg_ts > latest_ts:
                 latest_ts = msg_ts
+
+        if skipped:
+            print(f"Skipped {skipped} message(s) by metadata pre-screen.")
 
         # Insert into staging table.
         count = _insert_batch(rows, conn)

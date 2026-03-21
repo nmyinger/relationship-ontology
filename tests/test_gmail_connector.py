@@ -121,12 +121,16 @@ def _make_multipart_message(msg_id: str = "multi1") -> dict:
     }
 
 
-def _build_mock_service(messages: list[dict]) -> MagicMock:
+def _build_mock_service(messages: list[dict], metadata_overrides: dict | None = None) -> MagicMock:
     """
     Build a mock Gmail API service that returns *messages* from messages.list
     and the corresponding full message from messages.get.
+
+    *metadata_overrides* maps message ID to a dict with keys like ``labelIds``
+    and ``sizeEstimate`` returned when ``format="metadata"`` is requested.
     """
     service = MagicMock()
+    overrides = metadata_overrides or {}
 
     # messages.list returns IDs only.
     list_response = {
@@ -139,12 +143,18 @@ def _build_mock_service(messages: list[dict]) -> MagicMock:
     # list_next returns None (single page).
     service.users().messages().list_next.return_value = None
 
-    # messages.get returns full message by ID.
+    # messages.get returns metadata or full message depending on format.
     msg_by_id = {m["id"]: m for m in messages}
 
     def _get_side_effect(userId, id, format):
         mock = MagicMock()
-        mock.execute.return_value = msg_by_id[id]
+        if format == "metadata":
+            # Return metadata: labelIds + sizeEstimate.
+            base = {"id": id, "labelIds": ["INBOX"], "sizeEstimate": 5000}
+            base.update(overrides.get(id, {}))
+            mock.execute.return_value = base
+        else:
+            mock.execute.return_value = msg_by_id[id]
         return mock
 
     service.users().messages().get.side_effect = _get_side_effect
@@ -192,6 +202,23 @@ def test_messages_list_called_with_after_query(db):
     assert "after:2026/01/01" in str(call_kwargs)
 
 
+def test_category_exclusions_in_query(db):
+    """The Gmail query must include category exclusions to filter bulk mail server-side."""
+    scoped_url, conn = db
+    wm = datetime(2026, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    set_watermark("gmail", wm, conn)
+
+    msg = _make_gmail_message()
+    service = _build_mock_service([msg])
+
+    sync_gmail(database_url=scoped_url, service=service, user_email="bob@example.com")
+
+    call_kwargs = service.users().messages().list.call_args
+    q_param = str(call_kwargs)
+    for category in ("promotions", "updates", "forums", "social"):
+        assert f"-category:{category}" in q_param
+
+
 def test_messages_list_called_without_query_when_no_watermark(db):
     """When no watermark exists, messages.list is called without after: filter."""
     scoped_url, conn = db
@@ -229,6 +256,25 @@ def test_each_message_normalised_to_expected_shape(db):
     assert row[2] == "Deal Update"
     assert row[3] == "Please review"
     assert row[4] == "inbound"
+
+
+def test_thread_id_and_label_ids_stored(db):
+    """sync_gmail persists threadId and labelIds from the Gmail API message."""
+    scoped_url, conn = db
+
+    msg = _make_gmail_message(msg_id="meta1")
+    msg["threadId"] = "thread_abc"
+    msg["labelIds"] = ["INBOX", "IMPORTANT"]
+    service = _build_mock_service([msg])
+
+    sync_gmail(database_url=scoped_url, service=service, user_email="bob@example.com")
+
+    with conn.cursor() as cur:
+        cur.execute("SELECT thread_id, label_ids FROM email_raw WHERE external_id = 'meta1'")
+        row = cur.fetchone()
+
+    assert row[0] == "thread_abc"
+    assert set(row[1]) == {"INBOX", "IMPORTANT"}
 
 
 def test_on_conflict_does_not_duplicate(db):
@@ -278,6 +324,58 @@ def test_extract_plain_text_from_multipart():
     msg = _make_multipart_message()
     text = _extract_plain_text(msg["payload"])
     assert text == "Nested plain text"
+
+
+def test_metadata_skip_draft(db):
+    """Messages labelled DRAFT are skipped by metadata pre-screening."""
+    scoped_url, conn = db
+    msg = _make_gmail_message(msg_id="draft1")
+    service = _build_mock_service([msg], metadata_overrides={
+        "draft1": {"labelIds": ["DRAFT"]},
+    })
+
+    count = sync_gmail(database_url=scoped_url, service=service, user_email="bob@example.com")
+    assert count == 0
+    assert _email_raw_count(conn) == 0
+
+
+def test_metadata_skip_spam(db):
+    """Messages labelled SPAM are skipped by metadata pre-screening."""
+    scoped_url, conn = db
+    msg = _make_gmail_message(msg_id="spam1")
+    service = _build_mock_service([msg], metadata_overrides={
+        "spam1": {"labelIds": ["SPAM"]},
+    })
+
+    count = sync_gmail(database_url=scoped_url, service=service, user_email="bob@example.com")
+    assert count == 0
+    assert _email_raw_count(conn) == 0
+
+
+def test_metadata_skip_oversized(db):
+    """Messages exceeding _MAX_SIZE_BYTES are skipped."""
+    scoped_url, conn = db
+    msg = _make_gmail_message(msg_id="big1")
+    service = _build_mock_service([msg], metadata_overrides={
+        "big1": {"labelIds": ["INBOX"], "sizeEstimate": 500_000},
+    })
+
+    count = sync_gmail(database_url=scoped_url, service=service, user_email="bob@example.com")
+    assert count == 0
+    assert _email_raw_count(conn) == 0
+
+
+def test_metadata_inbox_passes(db):
+    """Normal INBOX messages pass metadata pre-screening."""
+    scoped_url, conn = db
+    msg = _make_gmail_message(msg_id="inbox1")
+    service = _build_mock_service([msg], metadata_overrides={
+        "inbox1": {"labelIds": ["INBOX", "IMPORTANT"], "sizeEstimate": 3000},
+    })
+
+    count = sync_gmail(database_url=scoped_url, service=service, user_email="bob@example.com")
+    assert count == 1
+    assert _email_raw_count(conn) == 1
 
 
 def test_parse_recipients_from_to_cc_bcc():

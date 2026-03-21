@@ -52,7 +52,7 @@ def load_config() -> dict:
 
     Optional keys (with defaults):
       OUTPUT_DIR   — directory for generated PDFs (default: "output")
-      LLM_MODEL    — LLM model identifier (default: "gpt-4o")
+      LLM_MODEL    — LLM model identifier (default: "claude-haiku-4-5-20251001")
 
     Later-slice keys (declared but not validated here):
       GOOGLE_CREDENTIALS_PATH         — validated by Slices 4/5 (Gmail + Calendar)
@@ -73,7 +73,7 @@ def load_config() -> dict:
 
     # --- Optional with defaults ---
     config["OUTPUT_DIR"] = _optional("OUTPUT_DIR", "output")
-    config["LLM_MODEL"] = _optional("LLM_MODEL", "gpt-4o")
+    config["LLM_MODEL"] = _optional("LLM_MODEL", "claude-haiku-4-5-20251001")
 
     # --- Later-slice keys: read if present, None if absent ---
     # These are deliberately not validated here; each slice validates what it needs.
@@ -85,5 +85,6 @@ def load_config() -> dict:
     config["SMTP_HOST"] = os.environ.get("SMTP_HOST")
     config["SMTP_PORT"] = os.environ.get("SMTP_PORT")
     config["SMTP_PASSWORD"] = os.environ.get("SMTP_PASSWORD")
+    config["USER_EMAIL"] = os.environ.get("USER_EMAIL")
 
     return config

@@ -80,11 +80,11 @@ def test_output_dir_override(monkeypatch):
 
 
 def test_llm_model_default(monkeypatch):
-    """LLM_MODEL defaults to 'gpt-4o' when not set."""
+    """LLM_MODEL defaults to 'claude-haiku-4-5-20251001' when not set."""
     monkeypatch.setenv("DATABASE_URL", "postgresql://x:y@localhost/db")
     monkeypatch.delenv("LLM_MODEL", raising=False)
     config = load_config()
-    assert config["LLM_MODEL"] == "gpt-4o"
+    assert config["LLM_MODEL"] == "claude-haiku-4-5-20251001"
 
 
 def test_llm_model_override(monkeypatch):

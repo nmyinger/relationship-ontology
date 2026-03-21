@@ -31,6 +31,10 @@ dependencies = [
     # python-dotenv: Loads .env files into os.environ so DATABASE_URL,
     # GOOGLE_CREDENTIALS_PATH, etc. don't need to be exported manually.
     "python-dotenv>=1.0",
+
+    # anthropic: Official Anthropic Python SDK. Used by Slice 6 (entity extraction)
+    # to call the Messages API for structured data extraction from emails/events.
+    "anthropic>=0.40",
 ]
 
 [project.optional-dependencies]

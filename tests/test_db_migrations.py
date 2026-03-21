@@ -34,6 +34,12 @@ _EXPECTED_MIGRATIONS = [
     "008_create_email_raw.sql",
     "009_create_ingestion_watermarks.sql",
     "010_create_calendar_raw.sql",
+    "011_create_interaction_signals.sql",
+    "012_create_company_aliases.sql",
+    "013_merge_duplicate_companies.sql",
+    "014_add_email_raw_thread_labels.sql",
+    "015_add_email_raw_skip_reason.sql",
+    "016_add_persons_is_internal.sql",
 ]
 
 _CORE_TABLES = {
@@ -192,6 +198,7 @@ def test_persons_columns(migrated_conn):
         "responsiveness_score",
         "priority_override",
         "tags",
+        "is_internal",
     }
     actual = _columns_for(migrated_conn, "persons", schema)
     assert actual == expected, f"Column mismatch: got {actual}"
@@ -252,7 +259,7 @@ def test_recommendations_columns(migrated_conn):
 
 
 def test_runner_is_idempotent():
-    """Running apply_migrations twice on the same schema produces no error and still 6 rows."""
+    """Running apply_migrations twice on the same schema produces no error and still 11 rows."""
     url = _get_database_url()
     conn, schema_name, db_url = _make_schema_conn(url)
     try:
@@ -261,7 +268,7 @@ def test_runner_is_idempotent():
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM schema_versions")
             count = cur.fetchone()[0]
-        assert count == 10
+        assert count == 16
     finally:
         _drop_schema(db_url, conn, schema_name)
 
@@ -309,7 +316,7 @@ def test_runner_skips_already_applied():
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM schema_versions")
             total = cur.fetchone()[0]
-        assert total == 10
+        assert total == 16
     finally:
         _drop_schema(db_url, conn, schema_name)
 

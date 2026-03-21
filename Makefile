@@ -1,4 +1,4 @@
-.PHONY: install test lint run-daily migrate setup-db load-deals sync-gmail sync-calendar
+.PHONY: install test lint run-daily migrate setup-db load-deals sync-gmail sync-calendar extract
 
 VENV      := .venv
 PYTHON    := $(VENV)/bin/python
@@ -47,6 +47,10 @@ sync-gmail:
 # sync-calendar — fetch new calendar events into the calendar_raw staging table.
 sync-calendar:
 	$(PYTHON) -m src.ingestion.calendar_connector
+
+# extract — run the entity extraction pipeline over unprocessed email and calendar rows.
+extract:
+	$(PYTHON) -m src.extraction.extractor
 
 # run-daily — placeholder for the daily pipeline entry point (implemented in Slice 11).
 run-daily:

@@ -206,6 +206,8 @@ def sync_calendar(
         rows: list[dict] = []
         latest_ts: datetime | None = None
         for event in events:
+            if event.get("status") == "cancelled":
+                continue
             if not _is_external_event(event, user_email):
                 continue
 
