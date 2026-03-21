@@ -40,6 +40,7 @@ _EXPECTED_MIGRATIONS = [
     "014_add_email_raw_thread_labels.sql",
     "015_add_email_raw_skip_reason.sql",
     "016_add_persons_is_internal.sql",
+    "017_create_contact_scores.sql",
 ]
 
 _CORE_TABLES = {
@@ -268,7 +269,7 @@ def test_runner_is_idempotent():
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM schema_versions")
             count = cur.fetchone()[0]
-        assert count == 16
+        assert count == 17
     finally:
         _drop_schema(db_url, conn, schema_name)
 
@@ -316,7 +317,7 @@ def test_runner_skips_already_applied():
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM schema_versions")
             total = cur.fetchone()[0]
-        assert total == 16
+        assert total == 17
     finally:
         _drop_schema(db_url, conn, schema_name)
 

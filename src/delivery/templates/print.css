@@ -1,0 +1,214 @@
+/* print.css — Print-safe stylesheet for the daily brief PDF.
+ *
+ * Designed for grayscale printing on Letter/A4 paper.
+ * No color dependency. Clear typography hierarchy. Generous whitespace.
+ */
+
+@page {
+    size: Letter;
+    margin: 0.75in 0.75in 0.75in 0.75in;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    color: #1a1a1a;
+}
+
+/* --- Page header --- */
+
+.page-header {
+    text-align: center;
+    padding-bottom: 14pt;
+    margin-bottom: 18pt;
+    border-bottom: 2pt solid #1a1a1a;
+}
+
+.page-header h1 {
+    font-size: 20pt;
+    font-weight: 700;
+    letter-spacing: 0.5pt;
+    margin-bottom: 4pt;
+}
+
+.page-header .date {
+    font-size: 12pt;
+    font-weight: 400;
+    color: #444;
+}
+
+.page-header .summary {
+    font-size: 10pt;
+    color: #666;
+    margin-top: 4pt;
+}
+
+/* --- Section headings --- */
+
+.section-heading {
+    font-size: 13pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    border-bottom: 1pt solid #999;
+    padding-bottom: 4pt;
+    margin-top: 20pt;
+    margin-bottom: 12pt;
+}
+
+/* --- Recommendation cards --- */
+
+.rec-card {
+    border: 1pt solid #ccc;
+    border-top: 3pt solid #333;
+    padding: 10pt 12pt;
+    margin-bottom: 12pt;
+    page-break-inside: avoid;
+}
+
+.rec-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6pt;
+}
+
+.rec-card .contact-name {
+    font-size: 13pt;
+    font-weight: 700;
+}
+
+.rec-card .priority-badge {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    padding: 2pt 6pt;
+    border: 1pt solid #555;
+}
+
+.rec-card .contact-detail {
+    font-size: 9.5pt;
+    color: #555;
+    margin-bottom: 8pt;
+}
+
+.rec-card .label {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    color: #555;
+    margin-top: 8pt;
+    margin-bottom: 2pt;
+}
+
+.rec-card .why-now {
+    font-size: 10.5pt;
+    line-height: 1.4;
+}
+
+.rec-card .action-line {
+    font-size: 10pt;
+    font-weight: 600;
+    margin-top: 6pt;
+}
+
+.rec-card .draft-text {
+    font-size: 9.5pt;
+    line-height: 1.4;
+    background: #f5f5f5;
+    padding: 8pt 10pt;
+    margin-top: 4pt;
+    white-space: pre-wrap;
+    border-left: 2pt solid #999;
+}
+
+.rec-card .deal-tag {
+    display: inline-block;
+    font-size: 9pt;
+    padding: 1pt 6pt;
+    border: 1pt solid #888;
+    margin-top: 4pt;
+}
+
+/* --- Meeting brief cards --- */
+
+.meeting-card {
+    border: 1pt solid #ccc;
+    padding: 8pt 12pt;
+    margin-bottom: 10pt;
+    page-break-inside: avoid;
+}
+
+.meeting-card .meeting-title {
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 2pt;
+}
+
+.meeting-card .meeting-detail {
+    font-size: 9.5pt;
+    color: #555;
+    margin-bottom: 4pt;
+}
+
+.meeting-card .meeting-context {
+    font-size: 10pt;
+    line-height: 1.4;
+}
+
+/* --- Deal matching table --- */
+
+.deal-section {
+    margin-bottom: 14pt;
+    page-break-inside: avoid;
+}
+
+.deal-section .deal-name {
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 2pt;
+}
+
+.deal-section .deal-detail {
+    font-size: 9.5pt;
+    color: #555;
+    margin-bottom: 4pt;
+}
+
+.deal-section .deal-contacts {
+    font-size: 10pt;
+    padding-left: 14pt;
+}
+
+.deal-section .deal-contacts li {
+    margin-bottom: 2pt;
+}
+
+/* --- Empty state --- */
+
+.empty-note {
+    font-size: 10pt;
+    color: #888;
+    font-style: italic;
+    margin-bottom: 12pt;
+}
+
+/* --- Footer --- */
+
+.page-footer {
+    margin-top: 24pt;
+    padding-top: 8pt;
+    border-top: 1pt solid #ccc;
+    font-size: 8pt;
+    color: #999;
+    text-align: center;
+}

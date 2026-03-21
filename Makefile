@@ -1,4 +1,4 @@
-.PHONY: install test lint run-daily migrate setup-db load-deals sync-gmail sync-calendar extract
+.PHONY: install test lint run-daily migrate setup-db load-deals sync-gmail sync-calendar extract score recommend render-pdf
 
 VENV      := .venv
 PYTHON    := $(VENV)/bin/python
@@ -51,6 +51,18 @@ sync-calendar:
 # extract — run the entity extraction pipeline over unprocessed email and calendar rows.
 extract:
 	$(PYTHON) -m src.extraction.extractor
+
+# score — compute priority scores for all contacts.
+score:
+	$(PYTHON) -m src.scoring.scorer
+
+# recommend — generate daily recommendations from scored contacts via LLM.
+recommend:
+	$(PYTHON) -m src.recommendations.generator
+
+# render-pdf — render the daily brief PDF from today's recommendations.
+render-pdf:
+	$(PYTHON) -m src.delivery.pdf_renderer
 
 # run-daily — placeholder for the daily pipeline entry point (implemented in Slice 11).
 run-daily:

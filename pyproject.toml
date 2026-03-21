@@ -35,6 +35,14 @@ dependencies = [
     # anthropic: Official Anthropic Python SDK. Used by Slice 6 (entity extraction)
     # to call the Messages API for structured data extraction from emails/events.
     "anthropic>=0.40",
+
+    # jinja2: Template engine for rendering the daily brief HTML before PDF conversion.
+    # Used by Slice 9 (PDF renderer) to produce structured recommendation cards.
+    "jinja2>=3.1",
+
+    # weasyprint: HTML-to-PDF renderer with CSS print support. No Chromium dependency.
+    # Used by Slice 9 to produce the daily brief PDF optimized for grayscale printing.
+    "weasyprint>=62.0",
 ]
 
 [project.optional-dependencies]
